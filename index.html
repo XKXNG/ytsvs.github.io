@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Search</title>
+</head>
+<body style="text-align: center; justify-content: center; margin-top: 100px;">
+    <h1>YouTube Video Search</h1>
+    <input type="text" id="searchInput" placeholder="Enter a search term">
+    <button style="margin-bottom: 50px;" id="searchButton">Search</button>
+
+    <div id="results"></div>
+    <button id="loadMore" style="display: none;">Load More</button>
+
+    <script>
+        alert("This website is for personal use. By clicking 'OK' you agree that your data WILL be Mantained & Manipulated.");
+        const apiKey = 'AIzaSyD9xKdCDBdUOTzds8ohR4Ed2dt2C6hpVP4';
+        // Honestly, i couldn't care less with what you do with but please refrain from anything malicious
+        let nextPageToken = '';
+        const searchInput = document.getElementById('searchInput');
+        const resultsDiv = document.getElementById('results');
+        const loadMoreButton = document.getElementById('loadMore');
+        const searchButton = document.getElementById('searchButton');
+
+        searchButton.addEventListener('click', () => {
+            nextPageToken = '';
+            loadMoreButton.style.display = 'none';
+            searchYouTube();
+        });
+
+        searchInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                nextPageToken = '';
+                loadMoreButton.style.display = 'none';
+                searchYouTube();
+            }
+        });
+
+        loadMoreButton.addEventListener('click', () => {
+            loadMoreVideos();
+        });
+
+        function openYouTubeVideo(videoId) {
+            window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+        }
+
+        function searchYouTube() {
+            const searchTerm = searchInput.value.trim();
+            if (searchTerm === '') {
+                alert('Please enter a search term.');
+                return;
+            }
+
+            fetch(`https://www.googleapis.com/youtube/v3/search?key=${apiKey}&q=${searchTerm}&part=snippet&type=video`)
+                .then(response => response.json())
+                .then(data => {
+                    displayVideos(data.items);
+                    if (data.nextPageToken) {
+                        nextPageToken = data.nextPageToken;
+                        loadMoreButton.style.display = 'block';
+                    } else {
+                        loadMoreButton.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function loadMoreVideos() {
+            const searchTerm = searchInput.value.trim();
+            fetch(`https://www.googleapis.com/youtube/v3/search?key=${apiKey}&q=${searchTerm}&part=snippet&type=video&pageToken=${nextPageToken}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayVideos(data.items);
+                    if (data.nextPageToken) {
+                        nextPageToken = data.nextPageToken;
+                    } else {
+                        loadMoreButton.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function displayVideos(items) {
+            resultsDiv.innerHTML = '';
+            items.forEach(item => {
+                const videoId = item.id.videoId;
+                const title = item.snippet.title;
+                const thumbnailUrl = item.snippet.thumbnails.medium.url;
+                const videoDiv = document.createElement('div');
+                videoDiv.innerHTML = `
+                    <h2>${title}</h2>
+                    <a href="javascript:void(0);" onclick="openYouTubeVideo('${videoId}')">
+                        <img src="${thumbnailUrl}" alt="${title}">
+                    </a>
+                `;
+                resultsDiv.appendChild(videoDiv);
+            });
+        }
+    </script>
+</body>
+</html>
